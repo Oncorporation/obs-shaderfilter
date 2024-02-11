@@ -196,6 +196,7 @@ struct shader_filter_data {
 	float elapsed_time_loop;
 	int loops;
 	float local_time;
+	float last_transition_time;
 	float rand_f;
 	float rand_instance_f;
 	float rand_activation_f;
@@ -1720,6 +1721,47 @@ static void shader_transition_video_callback(void *data, gs_texture_t *a,
 		gs_effect_set_float(filter->param_transition_time, t);
 
 	shader_filter_set_effect_params(filter);
+
+	// This updates source textures and make sure they're active, visible,
+	// and playing (even if not within current scene or previous scene)
+	size_t param_count = filter->stored_param_list.num;
+	for (size_t param_index = 0; param_index < param_count; param_index++) {
+		struct effect_param_data *param =
+			(filter->stored_param_list.array + param_index);
+		obs_source_t *source = NULL;
+		if ( ( param->type == GS_SHADER_PARAM_TEXTURE ) && ( param->source != NULL ) ) {
+			source = obs_weak_source_get_source( param->source);
+			if (source) {
+				// If t is less than last_transition_time, we have restarted so
+				// source clips should restart too.
+				if (t < filter->last_transition_time || filter->last_transition_time == 0) {
+					obs_source_media_set_time(source, 0);
+				}
+				// Get current media state
+				enum obs_media_state curstate = obs_source_media_get_state(source);
+
+				// If the video is paused, play it.
+				if ( curstate == (enum obs_media_state) OBS_MEDIA_STATE_PAUSED ) 
+					obs_source_media_play_pause( source, false);
+
+				// If the video isn't playing, restart it.
+				else if ( curstate == (enum obs_media_state) OBS_MEDIA_STATE_ENDED
+					|| curstate == (enum obs_media_state) OBS_MEDIA_STATE_STOPPED
+					|| curstate == (enum obs_media_state) OBS_MEDIA_STATE_NONE ) 
+					obs_source_media_restart( source);
+
+				// Make sure the source clip is marked as visible and active (even if it really isn't)
+				if (!obs_source_showing( source)) obs_source_inc_showing( source); 
+				if (!obs_source_active( source))  obs_source_inc_active( source);
+
+				// Release the local source reference
+				obs_source_release(source);
+			}
+		}
+	}
+	// Update last transition (normalized) time, so if t is ever less than it, we can
+	// know that the transition has started over.
+	filter->last_transition_time = t;
 
 	while (gs_effect_loop(filter->effect, "Draw"))
 		gs_draw_sprite(NULL, 0, cx, cy);
