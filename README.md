@@ -1,3 +1,5 @@
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads-pre/Oncorporation/obs-shaderfilter/latest/total)
+
 # obs-shaderfilter 1.21
 
 ## Introduction
