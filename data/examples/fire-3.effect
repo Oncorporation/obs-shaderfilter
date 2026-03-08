@@ -68,9 +68,12 @@ VertData mainTransform(VertData v_in)
 	return vert_out;
 }
 
-int2 iMouse()
+float2 iMouse()
 {
-    return int2(Movement_Direction.x * uv_size.x, Movement_Direction.y * uv_size.y);
+    // Use explicit movement direction components and float2 to avoid
+    // relying on the Movement_Direction macro or int2 type when the
+    // shader is preprocessed/converted.
+    return float2(Movement_Direction_Horizontal * uv_size.x, Movement_Direction_Vertical * uv_size.y);
 }
 
 
