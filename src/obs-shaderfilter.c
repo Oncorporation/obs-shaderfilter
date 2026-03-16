@@ -195,6 +195,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	filter->param_uv_size = NULL;
 	filter->param_rand_f = NULL;	
 	filter->param_rand_activation_f = NULL;
+	filter->param_rand_instance_f = NULL;
 	filter->param_loops = NULL;
 	filter->param_local_time = NULL;
 
