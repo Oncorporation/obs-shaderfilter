@@ -207,7 +207,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	}
 
 	// Load text and build the effect from the template, if necessary. 
-	const char *shader_text = NULL;
+	char *shader_text = NULL;
 	bool use_template =
 		!obs_data_get_bool(settings, "override_entire_effect");
 
@@ -222,13 +222,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		use_template = true;
 	}
 
-	if (shader_text == NULL)
-	{
-		shader_text = "";
-	}
-
 	size_t effect_header_length = strlen(effect_template_begin);
-	size_t effect_body_length = strlen(shader_text);
+	size_t effect_body_length = shader_text ? strlen(shader_text) : 0;
 	size_t effect_footer_length = strlen(effect_template_end);
 	size_t effect_buffer_total_size = effect_header_length + effect_body_length + effect_footer_length;
 	
@@ -243,7 +238,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		dstr_cat(&effect_text, effect_template_begin);
 	}
 
-	dstr_cat(&effect_text, shader_text);
+	if (shader_text) {
+		dstr_cat(&effect_text, shader_text);
+		bfree(shader_text);
+	}
 
 	if (use_template)
 	{
@@ -254,6 +252,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	char *errors = NULL;
 
 	obs_enter_graphics();
+	if (filter->effect)
+		gs_effect_destroy(filter->effect);
 	filter->effect = gs_effect_create(effect_text.array, NULL, &errors);
 	obs_leave_graphics();
 
@@ -262,6 +262,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	if (filter->effect == NULL)
 	{
 		blog(LOG_WARNING, "[obs-shaderfilter] Unable to create effect. Errors returned from parser:\n%s", (errors == NULL || strlen(errors) == 0 ? "(None)" : errors));
+		bfree(errors);
+		goto end;
 	}
 
 	// Store references to the new effect's parameters. 
@@ -326,6 +328,9 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 			cached_data->param = param;
 		}
 	}	
+
+end:
+	obs_data_release(settings);
 }
 
 static const char *shader_filter_get_name(void *unused)
@@ -359,6 +364,11 @@ static void *shader_filter_create(obs_data_t *settings, obs_source_t *source)
 static void shader_filter_destroy(void *data)
 {
 	struct shader_filter_data *filter = data;
+
+	obs_enter_graphics();
+	if (filter->effect)
+		gs_effect_destroy(filter->effect);
+	obs_leave_graphics();
 
 	dstr_free(&filter->last_path);
 	da_free(filter->stored_param_list);
