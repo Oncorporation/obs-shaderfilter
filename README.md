@@ -1,3 +1,6 @@
+
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads-pre/Oncorporation/obs-shaderfilter/latest/total)
+
 # obs-shaderfilter
 
 ## Introduction
@@ -240,7 +243,7 @@ I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixe
 If you wish to build the obs-shaderfilter plugin from source, you should just need [CMake](https://cmake.org/) 
 and the OBS Studio libraries and headers.
 
-* [obs-shaderfilter source repository](https://github.com/exeldro/obs-shaderfilter)
+* [obs-shaderfilter source repository](https://github.com/oncorporation/obs-shaderfilter)
 * [OBS Studio source repository](https://github.com/obsproject/obs-studio)
 
 1. In-tree build
@@ -254,4 +257,4 @@ and the OBS Studio libraries and headers.
     - Check out this repository and run `cmake -S . -B build -DBUILD_OUT_OF_TREE=On && cmake --build build`
 
 ## Donations
-https://www.paypal.me/exeldro
+https://www.paypal.me/CharlesFettinger
